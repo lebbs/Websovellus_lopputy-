@@ -1,0 +1,72 @@
+﻿
+@{
+    ViewData["Title"] = "Graph";
+}
+
+<h2>Mittaukset <span id="measDate"></span></h2>
+
+<canvas id="mychart" width="600" height="600"></canvas>
+
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
+    <script>
+        var dataUrl = '@Url.Content("~/api/Data")'; 
+        $(function () {
+            // kutsutaan api/Data -urlia http GET:nä
+            $.getJSON(dataUrl, function (data) {
+                // pyyntö onnistui
+                //console.log(JSON.stringify(data));
+                var ctx = document.getElementById("mychart").getContext('2d');
+
+                // data-muuttujassa on Sami-palvelun tiedot. Sami lähettää datan
+                // siten, että viimeisin (uusin) mittaus tulee indeksissä 0.
+                data = data.reverse();
+
+                /* data[]:
+                 *      data[0] = mittaus 1 = uusin mittaus:
+                 *          - sensor 1
+                 *          - sensor 2
+                 *          - jne.
+                 *      mittaus 2:
+                 *          - sensor 1
+                 *          - sensor 2
+                 *          - jne.
+                 *      jne.
+                 *
+
+                */
+
+                // create chartData from data
+                var charData = [];
+
+                // create chartLabels from data
+                var chartLabels = [];
+                var firstMeasurement = data[0];
+                var dataSetLabel = firstMeasurement.data[0].tag;
+                $('#measDate').html(new Date(firstMeasurement.timestampISO8601).toLocaleDateString());
+                // jQuery each-funtio, käydään läpi kaikku tulevat datat
+                $.each(data, function (index, item) {
+                    chartLabels.push(new Date(item.timestampISO8601).toLocaleTimeString());
+                    // piirretään vain ensimmäisen Data-objektin value-arvo
+                    charData.push(item.data[0].value);
+                });
+
+                // TODO: graafin piirto ei toimi vielä!!!
+                var myLineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: dataSetLabel,
+                                data: charData
+                            }
+                        ]
+                    }
+                });
+            });
+
+        });
+    </script>
+}
